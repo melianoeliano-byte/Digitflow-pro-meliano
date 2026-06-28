@@ -11,6 +11,8 @@ class DerivWS {
     this._openHandlers = [];
     this._closeHandlers = [];
     this._errorHandlers = [];
+    this._proposalOpenHandlers = [];
+    this._transactionHandlers = [];
     this._backoff = 1000;
     this._maxBackoff = 30000;
 
@@ -48,7 +50,8 @@ class DerivWS {
           if (pending) {
             clearTimeout(pending.timeout);
             delete this._pending[rid];
-            return pending.resolve(data);
+            pending.resolve(data);
+            return;
           }
         }
 
@@ -59,12 +62,19 @@ class DerivWS {
           return;
         }
 
-        // Fallback: if message contains proposal or buy, try to resolve by matching proposal id inside response
-        // Some Deriv responses may include 'proposal' or 'buy' without echo_req; attempt best-effort matching
-        if (data.proposal && data.proposal.id) {
-          // try to resolve pending by searching for a pending with matching proposal id in request (best-effort not implemented)
+        // proposal_open_contract events (contract updates)
+        if (data.proposal_open_contract) {
+          this._proposalOpenHandlers.forEach((h) => h(data.proposal_open_contract));
+          return;
         }
 
+        // transaction events
+        if (data.transaction) {
+          this._transactionHandlers.forEach((h) => h(data.transaction));
+          return;
+        }
+
+        // Other messages: ignore or log
       } catch (e) {
         console.error("Invalid WS message", e);
       }
@@ -131,6 +141,14 @@ class DerivWS {
 
   onError(fn) {
     this._errorHandlers.push(fn);
+  }
+
+  onProposalOpen(fn) {
+    this._proposalOpenHandlers.push(fn);
+  }
+
+  onTransaction(fn) {
+    this._transactionHandlers.push(fn);
   }
 
   subscribe(symbol = "R_100") {
