@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Digitflow Pro - Deriv Auto Trader",
+  "version": "2.0.0",
+  "description": "Advanced automated trading dashboard for Deriv with smart digit analysis",
+  "permissions": [
+    "storage",
+    "scripting",
+    "webRequest"
+  ],
+  "icons": {
+    "128": "public/icon.png"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Digitflow Pro Dashboard"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
